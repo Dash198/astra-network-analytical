@@ -5,7 +5,9 @@ LICENSE file in the root directory of this source tree.
 
 #include "congestion_aware/Helper.h"
 #include "congestion_aware/FullyConnected.h"
+#include "congestion_aware/Mesh.h"
 #include "congestion_aware/Ring.h"
+#include "congestion_aware/SMLong.h"
 #include "congestion_aware/Switch.h"
 #include <cstdlib>
 #include <iostream>
@@ -21,6 +23,7 @@ std::shared_ptr<Topology> NetworkAnalyticalCongestionAware::construct_topology(
     const auto npus_counts_per_dim = network_parser.get_npus_counts_per_dim();
     const auto bandwidths_per_dim = network_parser.get_bandwidths_per_dim();
     const auto latencies_per_dim = network_parser.get_latencies_per_dim();
+    const auto rank_order = network_parser.get_rank_order();
 
     // for now, congestion_aware backend supports 1-dim topology only
     if (dims_count != 1) {
@@ -41,6 +44,10 @@ std::shared_ptr<Topology> NetworkAnalyticalCongestionAware::construct_topology(
         return std::make_shared<Switch>(npus_count, bandwidth, latency);
     case TopologyBuildingBlock::FullyConnected:
         return std::make_shared<FullyConnected>(npus_count, bandwidth, latency);
+    case TopologyBuildingBlock::Mesh:
+        return std::make_shared<Mesh>(npus_count, bandwidth, latency, rank_order);
+    case TopologyBuildingBlock::SM_Long:
+        return std::make_shared<SMLong>(npus_count, bandwidth, latency, rank_order);
     default:
         // shouldn't reaach here
         std::cerr << "[Error] (network/analytical/congestion_aware) " << "not supported basic-topology" << std::endl;

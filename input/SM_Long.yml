@@ -1,0 +1,5 @@
+# P08 4x4 mesh plus two-hop east/south express links, 16 NPUs.
+topology: [ SM_Long ]
+npus_count: [ 16 ]
+bandwidth: [ 50.0 ]  # GB/s
+latency: [ 500.0 ]   # ns

@@ -60,6 +60,18 @@ class NetworkParser {
      */
     [[nodiscard]] std::vector<TopologyBuildingBlock> get_topologies_per_dim() const noexcept;
 
+    /**
+     * Read the optional "rank_order" value.
+     *
+     * When present it is a permutation of 0..npus_count-1 that maps a logical
+     * NPU (device) ID to the router/position it occupies in the physical
+     * topology.  An empty vector means the identity mapping (device r is at
+     * router r), which preserves the legacy behaviour.
+     *
+     * @return endpoint-to-router placement, or an empty vector for identity
+     */
+    [[nodiscard]] std::vector<int> get_rank_order() const noexcept;
+
   private:
     /// number of network dimensions
     int dims_count;
@@ -75,6 +87,9 @@ class NetworkParser {
 
     /// topology building block per each dimension
     std::vector<TopologyBuildingBlock> topology_per_dim;
+
+    /// optional endpoint-to-router placement for single-dimension topologies
+    std::vector<int> rank_order;
 
     /**
      * Parse topology name (in string) into TopologyBuildingBlock enum

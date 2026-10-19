@@ -51,6 +51,26 @@ TEST_F(TestNetworkAnalyticalCongestionUnaware, Switch) {
     EXPECT_EQ(comm_delay, 20'531);
 }
 
+TEST_F(TestNetworkAnalyticalCongestionUnaware, Mesh) {
+    const auto network_parser = NetworkParser("../../input/Mesh.yml");
+    const auto topology = construct_topology(network_parser);
+
+    // (0,0) -> (0,2): two mesh hops
+    EXPECT_EQ(topology->send(0, 2, chunk_size), 20'531);
+    // (0,0) -> (2,2): four mesh hops
+    EXPECT_EQ(topology->send(0, 10, chunk_size), 21'531);
+}
+
+TEST_F(TestNetworkAnalyticalCongestionUnaware, SMLong) {
+    const auto network_parser = NetworkParser("../../input/SM_Long.yml");
+    const auto topology = construct_topology(network_parser);
+
+    // (0,0) -> (0,2): one express hop instead of two mesh hops
+    EXPECT_EQ(topology->send(0, 2, chunk_size), 20'031);
+    // (0,0) -> (2,2): two express hops instead of four mesh hops
+    EXPECT_EQ(topology->send(0, 10, chunk_size), 20'531);
+}
+
 TEST_F(TestNetworkAnalyticalCongestionUnaware, Ring_FullyConnected_Switch) {
     // create network
     const auto network_parser = NetworkParser("../../input/Ring_FullyConnected_Switch.yml");

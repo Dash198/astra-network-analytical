@@ -4,6 +4,7 @@ LICENSE file in the root directory of this source tree.
 *******************************************************************************/
 
 #include "common/NetworkParser.h"
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 
@@ -15,6 +16,7 @@ NetworkParser::NetworkParser(const std::string& path) noexcept : dims_count(-1) 
     bandwidth_per_dim = {};
     latency_per_dim = {};
     topology_per_dim = {};
+    rank_order = {};
 
     try {
         // load network config file
@@ -63,6 +65,10 @@ std::vector<TopologyBuildingBlock> NetworkParser::get_topologies_per_dim() const
     return topology_per_dim;
 }
 
+std::vector<int> NetworkParser::get_rank_order() const noexcept {
+    return rank_order;
+}
+
 void NetworkParser::parse_network_config_yml(const YAML::Node& network_config) noexcept {
     // parse topology_per_dim
     const auto topology_names = parse_vector<std::string>(network_config["topology"]);
@@ -78,6 +84,11 @@ void NetworkParser::parse_network_config_yml(const YAML::Node& network_config) n
     npus_count_per_dim = parse_vector<int>(network_config["npus_count"]);
     bandwidth_per_dim = parse_vector<Bandwidth>(network_config["bandwidth"]);
     latency_per_dim = parse_vector<Latency>(network_config["latency"]);
+
+    // optional endpoint-to-router placement
+    if (network_config["rank_order"]) {
+        rank_order = parse_vector<int>(network_config["rank_order"]);
+    }
 
     // check the validity of the parsed network config
     check_validity();
@@ -96,6 +107,14 @@ TopologyBuildingBlock NetworkParser::parse_topology_name(const std::string& topo
 
     if (topology_name == "Switch") {
         return TopologyBuildingBlock::Switch;
+    }
+
+    if (topology_name == "Mesh") {
+        return TopologyBuildingBlock::Mesh;
+    }
+
+    if (topology_name == "SM_Long") {
+        return TopologyBuildingBlock::SM_Long;
     }
 
     // shouldn't reach here
@@ -147,6 +166,30 @@ void NetworkParser::check_validity() const noexcept {
             std::cerr << "[Error] (network/analytical) " << "latency (" << latency << ") should be non-negative"
                       << std::endl;
             std::exit(-1);
+        }
+    }
+
+    // rank_order, when present, must be a permutation of 0..npus_count-1
+    if (!rank_order.empty()) {
+        if (dims_count != 1) {
+            std::cerr << "[Error] (network/analytical) "
+                      << "rank_order is only supported for 1-dimensional topologies" << std::endl;
+            std::exit(-1);
+        }
+        const auto npus_count = npus_count_per_dim[0];
+        if (static_cast<int>(rank_order.size()) != npus_count) {
+            std::cerr << "[Error] (network/analytical) " << "rank_order size (" << rank_order.size()
+                      << ") doesn't match npus_count (" << npus_count << ")" << std::endl;
+            std::exit(-1);
+        }
+        auto sorted = rank_order;
+        std::sort(sorted.begin(), sorted.end());
+        for (auto index = 0; index < npus_count; index++) {
+            if (sorted[index] != index) {
+                std::cerr << "[Error] (network/analytical) " << "rank_order is not a permutation of 0.."
+                          << (npus_count - 1) << std::endl;
+                std::exit(-1);
+            }
         }
     }
 }

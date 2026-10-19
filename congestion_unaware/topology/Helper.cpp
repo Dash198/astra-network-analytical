@@ -6,8 +6,10 @@ LICENSE file in the root directory of this source tree.
 #include "congestion_unaware/Helper.h"
 #include "congestion_unaware/BasicTopology.h"
 #include "congestion_unaware/FullyConnected.h"
+#include "congestion_unaware/Mesh.h"
 #include "congestion_unaware/MultiDimTopology.h"
 #include "congestion_unaware/Ring.h"
+#include "congestion_unaware/SMLong.h"
 #include "congestion_unaware/Switch.h"
 #include <cstdlib>
 #include <iostream>
@@ -23,6 +25,7 @@ std::shared_ptr<Topology> NetworkAnalyticalCongestionUnaware::construct_topology
     const auto npus_counts_per_dim = network_parser.get_npus_counts_per_dim();
     const auto bandwidths_per_dim = network_parser.get_bandwidths_per_dim();
     const auto latencies_per_dim = network_parser.get_latencies_per_dim();
+    const auto rank_order = network_parser.get_rank_order();
 
     // if dims_count is 1, just create basic topology
     if (dims_count == 1) {
@@ -40,6 +43,10 @@ std::shared_ptr<Topology> NetworkAnalyticalCongestionUnaware::construct_topology
             return std::make_shared<Switch>(npus_count, bandwidth, latency);
         case TopologyBuildingBlock::FullyConnected:
             return std::make_shared<FullyConnected>(npus_count, bandwidth, latency);
+        case TopologyBuildingBlock::Mesh:
+            return std::make_shared<Mesh>(npus_count, bandwidth, latency, rank_order);
+        case TopologyBuildingBlock::SM_Long:
+            return std::make_shared<SMLong>(npus_count, bandwidth, latency, rank_order);
         default:
             // shouldn't reach here
             std::cerr << "[Error] (network/analytical/congestion_unaware)" << "Not supported topology" << std::endl;

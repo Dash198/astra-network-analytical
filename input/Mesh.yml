@@ -1,0 +1,5 @@
+# P08 4x4 mesh, 16 NPUs.
+topology: [ Mesh ]
+npus_count: [ 16 ]
+bandwidth: [ 50.0 ]  # GB/s
+latency: [ 500.0 ]   # ns

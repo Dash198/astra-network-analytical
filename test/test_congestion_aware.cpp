@@ -97,6 +97,32 @@ TEST_F(TestNetworkAnalyticalCongestionAware, Switch) {
     EXPECT_EQ(simulation_time, 40'062);
 }
 
+TEST_F(TestNetworkAnalyticalCongestionAware, Mesh) {
+    const auto network_parser = NetworkParser("../../input/Mesh.yml");
+    const auto topology = construct_topology(network_parser);
+
+    auto route = topology->route(0, 2);
+    auto chunk = std::make_unique<Chunk>(chunk_size, route, callback, nullptr);
+    topology->send(std::move(chunk));
+    while (!event_queue->finished()) {
+        event_queue->proceed();
+    }
+    EXPECT_EQ(event_queue->get_current_time(), 40'062);
+}
+
+TEST_F(TestNetworkAnalyticalCongestionAware, SMLong) {
+    const auto network_parser = NetworkParser("../../input/SM_Long.yml");
+    const auto topology = construct_topology(network_parser);
+
+    auto route = topology->route(0, 2);
+    auto chunk = std::make_unique<Chunk>(chunk_size, route, callback, nullptr);
+    topology->send(std::move(chunk));
+    while (!event_queue->finished()) {
+        event_queue->proceed();
+    }
+    EXPECT_EQ(event_queue->get_current_time(), 20'031);
+}
+
 TEST_F(TestNetworkAnalyticalCongestionAware, AllGatherOnRing) {
     /// setup
     const auto network_parser = NetworkParser("../../input/Ring.yml");
